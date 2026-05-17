@@ -1,0 +1,101 @@
+{
+  "name": "ts-benchmark-m5-pipeline",
+  "email_notifications": {
+    "on_failure": ["jemaliachrafpsi@gmail.com"]
+  },
+  "timeout_seconds": 86400,
+  "max_concurrent_runs": 1,
+  "tasks": [
+    {
+      "task_key": "eda",
+      "description": "EDA with PySpark on ADLS Silver layer",
+      "notebook_task": {
+        "notebook_path": "/Shared/ts-benchmark/01_EDA_spark",
+        "source": "WORKSPACE"
+      },
+      "existing_cluster_id": "{{CPU_CLUSTER_ID}}",
+      "timeout_seconds": 3600
+    },
+    {
+      "task_key": "feature_engineering",
+      "depends_on": [{"task_key": "eda"}],
+      "description": "Distributed feature engineering → Gold Delta layer",
+      "notebook_task": {
+        "notebook_path": "/Shared/ts-benchmark/02_feature_engineering",
+        "source": "WORKSPACE"
+      },
+      "existing_cluster_id": "{{CPU_CLUSTER_ID}}",
+      "timeout_seconds": 7200
+    },
+    {
+      "task_key": "data_validation",
+      "depends_on": [{"task_key": "feature_engineering"}],
+      "description": "Great Expectations data quality gate",
+      "notebook_task": {
+        "notebook_path": "/Shared/ts-benchmark/03_data_validation",
+        "source": "WORKSPACE"
+      },
+      "existing_cluster_id": "{{CPU_CLUSTER_ID}}",
+      "timeout_seconds": 1800
+    },
+    {
+      "task_key": "baselines",
+      "depends_on": [{"task_key": "data_validation"}],
+      "description": "Prophet + XGBoost baselines (Spark UDF parallel)",
+      "notebook_task": {
+        "notebook_path": "/Shared/ts-benchmark/04_baseline_models",
+        "source": "WORKSPACE"
+      },
+      "existing_cluster_id": "{{CPU_CLUSTER_ID}}",
+      "timeout_seconds": 14400
+    },
+    {
+      "task_key": "train_tft",
+      "depends_on": [{"task_key": "data_validation"}],
+      "description": "TFT training on GPU cluster",
+      "notebook_task": {
+        "notebook_path": "/Shared/ts-benchmark/05_deep_learning_tft",
+        "source": "WORKSPACE"
+      },
+      "existing_cluster_id": "{{GPU_CLUSTER_ID}}",
+      "timeout_seconds": 18000
+    },
+    {
+      "task_key": "train_patchtst",
+      "depends_on": [{"task_key": "data_validation"}],
+      "description": "PatchTST training on GPU cluster",
+      "notebook_task": {
+        "notebook_path": "/Shared/ts-benchmark/06_deep_learning_patchtst",
+        "source": "WORKSPACE"
+      },
+      "existing_cluster_id": "{{GPU_CLUSTER_ID}}",
+      "timeout_seconds": 18000
+    },
+    {
+      "task_key": "benchmark",
+      "depends_on": [
+        {"task_key": "baselines"},
+        {"task_key": "train_tft"},
+        {"task_key": "train_patchtst"}
+      ],
+      "description": "Collect and compare all model results",
+      "notebook_task": {
+        "notebook_path": "/Shared/ts-benchmark/07_benchmark_results",
+        "source": "WORKSPACE"
+      },
+      "existing_cluster_id": "{{CPU_CLUSTER_ID}}",
+      "timeout_seconds": 3600
+    },
+    {
+      "task_key": "explainability",
+      "depends_on": [{"task_key": "benchmark"}],
+      "description": "SHAP + TFT attention + counterfactuals",
+      "notebook_task": {
+        "notebook_path": "/Shared/ts-benchmark/08_explainability",
+        "source": "WORKSPACE"
+      },
+      "existing_cluster_id": "{{GPU_CLUSTER_ID}}",
+      "timeout_seconds": 7200
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+# configs/pipeline_config.yaml
+# Global configuration for the Time Series Benchmark pipeline
+
+project:
+  name: "timeseries-transformer-benchmark"
+  author: "Achraf Jemali"
+  version: "1.0.0"
+
+# ── Data ──────────────────────────────────────────────────────
+data:
+  dataset: "m5"
+  raw_path: "data/raw/"
+  processed_path: "data/processed/"
+  features_path: "data/features/"
+  
+  # Azure Data Lake (used in Databricks)
+  adls_account: "${ADLS_ACCOUNT_NAME}"
+  adls_container: "tsdata"
+  adls_raw: "abfss://tsdata@${ADLS_ACCOUNT_NAME}.dfs.core.windows.net/raw/"
+  adls_processed: "abfss://tsdata@${ADLS_ACCOUNT_NAME}.dfs.core.windows.net/processed/"
+  adls_features: "abfss://tsdata@${ADLS_ACCOUNT_NAME}.dfs.core.windows.net/features/"
+
+  # Splits
+  train_end: "2016-03-27"
+  val_end:   "2016-04-24"
+  test_end:  "2016-05-22"
+
+  # Forecasting
+  horizon: 28
+  freq: "D"
+
+# ── Feature Engineering ───────────────────────────────────────
+features:
+  lag_days: [1, 7, 14, 28]
+  rolling_windows: [7, 14, 28]
+  rolling_funcs: ["mean", "std", "min", "max"]
+  calendar_features: ["day_of_week", "month", "year", "is_weekend", "week_of_year"]
+  include_price: true
+  include_events: true
+  include_snap: true
+
+# ── Models ────────────────────────────────────────────────────
+models:
+  run_all: true
+  selected: ["sarima", "prophet", "xgboost", "nbeats", "nhits", "tft", "patchtst"]
+
+# ── Training ──────────────────────────────────────────────────
+training:
+  seed: 42
+  device: "cuda"  # "cpu" for local
+  early_stopping_patience: 10
+  max_epochs: 100
+
+# ── MLflow ────────────────────────────────────────────────────
+mlflow:
+  tracking_uri: "mlruns/"  # Override with Azure ML URI in production
+  experiment_name: "ts-benchmark-m5"
+  register_best_model: true
+
+# ── Evaluation ────────────────────────────────────────────────
+evaluation:
+  metrics: ["rmsse", "mase", "smape", "rmse", "mae"]
+  primary_metric: "rmsse"
+  statistical_test: "diebold_mariano"
+
+# ── Serving ───────────────────────────────────────────────────
+serving:
+  host: "0.0.0.0"
+  port: 8000
+  model_uri: "models:/ts-benchmark/Production"
+  default_model: "tft"

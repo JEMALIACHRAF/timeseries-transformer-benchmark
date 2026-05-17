@@ -1,0 +1,64 @@
+{
+  "cpu_cluster": {
+    "cluster_name": "ts-benchmark-cpu",
+    "spark_version": "14.3.x-scala2.12",
+    "node_type_id": "Standard_DS4_v2",
+    "driver_node_type_id": "Standard_DS4_v2",
+    "num_workers": 8,
+    "autoscale": {
+      "min_workers": 2,
+      "max_workers": 16
+    },
+    "spark_conf": {
+      "spark.databricks.delta.optimizeWrite.enabled": "true",
+      "spark.databricks.delta.autoCompact.enabled": "true",
+      "spark.sql.adaptive.enabled": "true",
+      "spark.sql.adaptive.coalescePartitions.enabled": "true",
+      "spark.sql.shuffle.partitions": "auto",
+      "spark.adls.account": "{{ADLS_ACCOUNT_NAME}}"
+    },
+    "azure_attributes": {
+      "availability": "SPOT_WITH_FALLBACK_AZURE",
+      "first_on_demand": 1,
+      "spot_bid_max_price": -1
+    },
+    "spark_env_vars": {
+      "ADLS_ACCOUNT_NAME": "{{ADLS_ACCOUNT_NAME}}",
+      "MLFLOW_TRACKING_URI": "{{MLFLOW_TRACKING_URI}}"
+    },
+    "init_scripts": [],
+    "libraries": [
+      {"pypi": {"package": "neuralforecast==1.7.4"}},
+      {"pypi": {"package": "prophet==1.1.5"}},
+      {"pypi": {"package": "statsforecast==1.7.4"}},
+      {"pypi": {"package": "shap==0.45.0"}},
+      {"pypi": {"package": "great-expectations==0.18.14"}},
+      {"pypi": {"package": "mlflow==2.12.2"}}
+    ]
+  },
+  "gpu_cluster": {
+    "cluster_name": "ts-benchmark-gpu",
+    "spark_version": "14.3.x-gpu-ml-scala2.12",
+    "node_type_id": "Standard_NC6s_v3",
+    "driver_node_type_id": "Standard_NC6s_v3",
+    "num_workers": 1,
+    "spark_conf": {
+      "spark.adls.account": "{{ADLS_ACCOUNT_NAME}}"
+    },
+    "azure_attributes": {
+      "availability": "ON_DEMAND_AZURE"
+    },
+    "spark_env_vars": {
+      "ADLS_ACCOUNT_NAME": "{{ADLS_ACCOUNT_NAME}}",
+      "MLFLOW_TRACKING_URI": "{{MLFLOW_TRACKING_URI}}",
+      "CUDA_VISIBLE_DEVICES": "0"
+    },
+    "libraries": [
+      {"pypi": {"package": "neuralforecast==1.7.4"}},
+      {"pypi": {"package": "transformers==4.40.1"}},
+      {"pypi": {"package": "shap==0.45.0"}},
+      {"pypi": {"package": "captum==0.7.0"}},
+      {"pypi": {"package": "mlflow==2.12.2"}}
+    ]
+  }
+}

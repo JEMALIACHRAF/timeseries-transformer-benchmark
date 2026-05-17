@@ -1,0 +1,46 @@
+# configs/model_configs/tft.yaml
+name: "tft"
+class: "TemporalFusionTransformer"
+framework: "neuralforecast"
+
+hyperparameters:
+  hidden_size: 256
+  lstm_layers: 2
+  num_attention_heads: 4
+  dropout: 0.1
+  learning_rate: 0.001
+  batch_size: 512
+  max_epochs: 100
+  val_check_steps: 100
+
+  # Input sizes (set automatically from feature engineering)
+  input_size: 28         # lookback window = horizon
+  stat_exog_list: []     # static covariates (item_id, store_id encoded)
+  hist_exog_list:        # historical covariates
+    - "sell_price"
+    - "lag_7"
+    - "lag_28"
+    - "roll_mean_7"
+    - "roll_mean_28"
+    - "roll_std_7"
+  futr_exog_list:        # future known covariates
+    - "day_of_week"
+    - "month"
+    - "is_weekend"
+    - "is_holiday"
+    - "snap_CA"
+    - "snap_TX"
+    - "snap_WI"
+    - "event_name_encoded"
+
+optuna:
+  n_trials: 50
+  direction: "minimize"
+  metric: "val_rmsse"
+  search_space:
+    hidden_size: [64, 128, 256, 512]
+    lstm_layers: [1, 2, 3]
+    num_attention_heads: [2, 4, 8]
+    dropout: [0.05, 0.3]
+    learning_rate: [1.0e-4, 1.0e-2]
+    batch_size: [256, 512, 1024]
